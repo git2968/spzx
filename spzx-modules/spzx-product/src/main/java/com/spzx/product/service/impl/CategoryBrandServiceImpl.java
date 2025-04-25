@@ -2,6 +2,7 @@ package com.spzx.product.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.spzx.common.core.exception.ServiceException;
+import com.spzx.product.domain.Brand;
 import com.spzx.product.domain.CategoryBrand;
 import com.spzx.product.mapper.CategoryBrandMapper;
 import com.spzx.product.mapper.CategoryMapper;
@@ -66,5 +67,10 @@ public class CategoryBrandServiceImpl extends ServiceImpl<CategoryBrandMapper, C
             throw new ServiceException("该分类下已有该品牌");
         }
         return baseMapper.updateById(categoryBrand);
+    }
+
+    @Override
+    public List<Brand> selectBrandListByCategoryId(Long categoryId) {
+        return baseMapper.selectBrandListByCategoryId(categoryId);
     }
 }

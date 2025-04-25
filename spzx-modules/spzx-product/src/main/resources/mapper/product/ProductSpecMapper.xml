@@ -2,4 +2,29 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.spzx.product.mapper.ProductSpecMapper">
 
+    <select id="selectProductSpecList" resultType="com.spzx.product.domain.ProductSpec">
+        select
+            ps.id,
+            ps.category_id,
+            ps.spec_name,
+            ps.spec_value,
+            ps.create_by,
+            ps.create_time,
+            ps.update_by,
+            ps.update_time,
+            ps.remark,
+            ps.del_flag,
+            c.name categoryName
+        from product_spec ps
+        inner join category c on ps.category_id = c.id
+        <where>
+            <if test="categoryId != null and categoryId != ''">
+                and ps.category_id = #{categoryId}
+            </if>
+            <if test="specName != null and specName != ''">
+                and ps.spec_name like concat('%',#{specName},'%')
+            </if>
+            and ps.del_flag = '0' and c.del_flag = '0'
+        </where>
+    </select>
 </mapper>

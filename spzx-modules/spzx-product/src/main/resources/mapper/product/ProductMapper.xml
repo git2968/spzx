@@ -2,4 +2,33 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.spzx.product.mapper.ProductMapper">
 
+    <select id="selectProductList" resultType="com.spzx.product.domain.Product">
+        select
+            p.id, p.name, p.brand_id, p.category1_id, p.category2_id, p.category3_id, p.unit_name, p.slider_urls, p.spec_value, p.status, p.audit_status, p.audit_message, p.create_time, p.update_by, p.update_time, p.del_flag, p.del_flag, p.remark,
+            b.name brandName ,
+            c1.name category1Name , c2.name category2Name , c2.name category3Name
+        from product p
+        LEFT JOIN brand b on b.id = p.brand_id
+        LEFT JOIN category c1 on c1.id = p.category1_id
+        LEFT JOIN category c2 on c2.id = p.category2_id
+        LEFT JOIN category c3 on c3.id = p.category2_id
+        <where>
+            <if test="name != null and name != ''">
+                and p.name like concat('%',#{name},'%')
+            </if>
+            <if test="brandId != null">
+                and p.brand_id = #{brandId}
+            </if>
+            <if test="category1Id != null">
+                and p.category1_id = #{category1Id}
+            </if>
+            <if test="category2Id !=null">
+                and p.category2_id = #{category2Id}
+            </if>
+            <if test="category3Id != null">
+                and p.category3_id = #{category3Id}
+            </if>
+            and p.del_flag = '0' and b.del_flag = '0' and c1.del_flag = '0' and c2.del_flag= '0' and c3.del_flag = '0'
+        </where>
+    </select>
 </mapper>
