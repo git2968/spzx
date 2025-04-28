@@ -2,6 +2,7 @@ package com.spzx.product.service;
 
 import com.spzx.product.domain.Category;
 import com.baomidou.mybatisplus.extension.service.IService;
+import jakarta.servlet.http.HttpServletResponse;
 
 import java.util.List;
 
@@ -18,4 +19,7 @@ public interface ICategoryService extends IService<Category> {
     List<Category> treeSelect(Long parentId);
 
     List<Long> getAllCategoryIdList(Long categoryId);
+
+    String importCategory(List<Category> categoryList, boolean updateSupport, String operName);
+
 }

@@ -67,13 +67,7 @@ public class ProductUnitController extends BaseController {
     }
 
     @Operation(summary = "获取全部商品单位")
-    @GetMapping(value = "/getBrandAllList")
-    public AjaxResult getBrandAllList(){
-        return success(productUnitService.list());
-    }
-
-    @Operation(summary = "获取全部商品单位")
-    @GetMapping("getBrandAll")
+    @GetMapping("getUnitAll")
     public AjaxResult getBrandAll() {
         return success(productUnitService.list());
     }

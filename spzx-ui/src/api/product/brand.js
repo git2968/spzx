@@ -41,3 +41,10 @@ export function delBrand(id) {
     method: 'delete'
   })
 }
+// 获取全部品牌
+export function getBrandAll() {
+  return request({
+    url: '/product/brand/getBrandAll',
+    method: 'get'
+  })
+}

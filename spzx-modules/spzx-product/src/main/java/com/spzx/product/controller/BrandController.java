@@ -3,6 +3,9 @@ package com.spzx.product.controller;
 import com.spzx.common.core.web.controller.BaseController;
 import com.spzx.common.core.web.domain.AjaxResult;
 import com.spzx.common.core.web.page.TableDataInfo;
+import com.spzx.common.log.annotation.Log;
+import com.spzx.common.log.enums.BusinessType;
+import com.spzx.common.security.annotation.RequiresPermissions;
 import com.spzx.common.security.utils.SecurityUtils;
 import com.spzx.product.domain.Brand;
 import com.spzx.product.service.IBrandService;
@@ -20,6 +23,7 @@ public class BrandController extends BaseController {
     @Autowired
     private IBrandService brandService;
     @Operation(summary = "分页获取品牌列表")
+    @RequiresPermissions("product:brand:list")
     @GetMapping(value = "/list")
     public TableDataInfo list(Brand brand)
     {
@@ -28,6 +32,7 @@ public class BrandController extends BaseController {
         return getDataTable(list);
     }
     @Operation(summary = "获取品牌详情")
+    @RequiresPermissions("product:brand:query")
     @GetMapping(value = "/{id}")
     public AjaxResult getInfo(@PathVariable Long id)
     {
@@ -36,6 +41,8 @@ public class BrandController extends BaseController {
     }
 
     @Operation(summary = "新增品牌")
+    @Log(title = "品牌管理", businessType = BusinessType.INSERT)
+    @RequiresPermissions("product:brand:add")
     @PostMapping
     public AjaxResult add(@RequestBody @Validated Brand brand){
         brand.setCreateBy(SecurityUtils.getUsername());
@@ -43,6 +50,8 @@ public class BrandController extends BaseController {
     }
 
     @Operation(summary = "修改品牌")
+    @Log(title = "品牌管理", businessType = BusinessType.UPDATE)
+    @RequiresPermissions("product:brand:edit")
     @PutMapping
     public AjaxResult edit(@RequestBody @Validated Brand brand){
         brand.setUpdateBy(SecurityUtils.getUsername());
@@ -50,18 +59,16 @@ public class BrandController extends BaseController {
     }
 
     @Operation(summary = "删除品牌")
+    @RequiresPermissions("product:brand:remove")
+    @Log(title = "品牌管理", businessType = BusinessType.DELETE)
     @DeleteMapping("/{ids}")
     public AjaxResult delete(@PathVariable List<Long> ids){
         return toAjax(brandService.removeBatchByIds(ids));
     }
 
-    @Operation(summary = "获取全部品牌")
-    @GetMapping(value = "/getBrandAllList")
-    public AjaxResult getBrandAllList(){
-        return success(brandService.list());
-    }
 
     @Operation(summary = "获取全部品牌")
+    @RequiresPermissions("product:brand:query")
     @GetMapping("getBrandAll")
     public AjaxResult getBrandAll() {
         return success(brandService.list());

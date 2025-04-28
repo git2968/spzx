@@ -12,6 +12,7 @@ import com.baomidou.mybatisplus.annotation.TableLogic;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.spzx.common.core.annotation.Excel;
 import lombok.Data;
 
 /**
@@ -24,6 +25,7 @@ public class BaseEntity implements Serializable
 {
     private static final long serialVersionUID = 1L;
 
+    @Excel(name = "ID")
     @TableId(type = IdType.AUTO)
     private Long id;
 
