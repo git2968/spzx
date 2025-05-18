@@ -1,9 +1,15 @@
 package com.spzx.product.service;
 
-import com.spzx.product.domain.Product;
+import com.spzx.product.api.domain.SkuQuery;
+import com.spzx.product.api.domain.vo.SkuPriceVo;
+import com.spzx.product.api.domain.vo.SkuStockVo;
+import com.spzx.product.api.domain.Product;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.spzx.product.api.domain.ProductSku;
+import com.spzx.product.api.domain.ProductDetails;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -28,4 +34,20 @@ public interface IProductService extends IService<Product> {
     int updateProduct(Product product);
 
     int deleteProductByIds(Long[] ids);
+
+    List<ProductSku> getTopSale();
+
+    List<ProductSku> selectProductSkuList(SkuQuery skuQuery);
+
+    SkuPriceVo getSkuPrice(Long skuId);
+
+    ProductDetails getProductDetails(Long id);
+
+    Map<String, Long> getSkuSpecValue(Long id);
+
+    SkuStockVo getSkuStock(Long skuId);
+
+    Product getProduct(Long id);
+
+    List<SkuPriceVo> getSkuPriceList(List<Long> skuIdList);
 }

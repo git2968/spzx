@@ -2,7 +2,6 @@ package com.spzx.product.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.spzx.common.core.utils.StringUtils;
-import com.spzx.product.domain.Brand;
 import com.spzx.product.domain.ProductUnit;
 import com.spzx.product.mapper.ProductUnitMapper;
 import com.spzx.product.service.IProductUnitService;

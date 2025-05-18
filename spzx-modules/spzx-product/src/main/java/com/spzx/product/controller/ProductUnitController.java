@@ -3,7 +3,6 @@ package com.spzx.product.controller;
 import com.spzx.common.core.web.domain.AjaxResult;
 import com.spzx.common.core.web.page.TableDataInfo;
 import com.spzx.common.security.utils.SecurityUtils;
-import com.spzx.product.domain.Brand;
 import com.spzx.product.domain.ProductUnit;
 import com.spzx.product.service.IProductUnitService;
 import io.swagger.v3.oas.annotations.Operation;

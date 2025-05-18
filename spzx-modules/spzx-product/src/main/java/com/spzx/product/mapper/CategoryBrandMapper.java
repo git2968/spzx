@@ -1,6 +1,6 @@
 package com.spzx.product.mapper;
 
-import com.spzx.product.domain.Brand;
+import com.spzx.product.api.domain.Brand;
 import com.spzx.product.domain.CategoryBrand;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 

@@ -1,7 +1,10 @@
 package com.spzx.product.mapper;
 
-import com.spzx.product.domain.ProductSku;
+import com.spzx.product.api.domain.ProductSku;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.spzx.product.api.domain.SkuQuery;
+
+import java.util.List;
 
 /**
  * <p>
@@ -13,4 +16,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
  */
 public interface ProductSkuMapper extends BaseMapper<ProductSku> {
 
+    List<ProductSku> selectTopSale();
+
+    List<ProductSku> selectProductSkuList(SkuQuery skuQuery);
 }

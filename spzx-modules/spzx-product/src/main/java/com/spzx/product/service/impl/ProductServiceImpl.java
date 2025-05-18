@@ -2,28 +2,30 @@ package com.spzx.product.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.spzx.common.core.exception.ServiceException;
-import com.spzx.common.core.web.domain.AjaxResult;
-import com.spzx.product.domain.Product;
-import com.spzx.product.domain.ProductDetails;
-import com.spzx.product.domain.ProductSku;
+import com.spzx.common.redis.cache.GuiguCache;
+import com.spzx.product.api.domain.SkuQuery;
+import com.spzx.product.api.domain.vo.SkuPriceVo;
+import com.spzx.product.api.domain.vo.SkuStockVo;
+import com.spzx.product.api.domain.Product;
+import com.spzx.product.api.domain.ProductDetails;
+import com.spzx.product.api.domain.ProductSku;
 import com.spzx.product.domain.SkuStock;
 import com.spzx.product.mapper.ProductDetailsMapper;
 import com.spzx.product.mapper.ProductMapper;
 import com.spzx.product.mapper.ProductSkuMapper;
 import com.spzx.product.mapper.SkuStockMapper;
-import com.spzx.product.service.ICategoryBrandService;
-import com.spzx.product.service.ICategoryService;
 import com.spzx.product.service.IProductService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import io.swagger.v3.oas.annotations.Operation;
+import org.redisson.api.RBloomFilter;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
+import org.redisson.api.RBloomFilter;
+import org.redisson.api.RedissonClient;
 
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -44,15 +46,18 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
     private ProductDetailsMapper productDetailsMapper;
     @Autowired
     private SkuStockMapper skuStockMapper;
+    @Autowired
+    private RedissonClient redissonClient;
 
     @Override
+    @GuiguCache(prefix = "product_list:")
     public List<Product> selectProductList(Product product) {
-
         return baseMapper.selectProductList(product);
     }
 
     @Transactional(rollbackFor = Exception.class)
     @Override
+    @GuiguCache(prefix = "product_audit:")
     public void updateAuditStatus(Long id, Integer auditStatus) {
         if (auditStatus != 1 && auditStatus != -1){
             throw new ServiceException("审核状态只能是1或-1");
@@ -72,17 +77,26 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void updateStatus(Long id, Integer status) {
-        if (status != 1 && status != -1){
-            throw new ServiceException("上下架状态只能是1或-1");
-        }
         Product product = new Product();
         product.setId(id);
-        product.setStatus(status);
+        if(status == 1) {
+            product.setStatus(1);
+
+            //sku加入布隆过滤器
+            RBloomFilter<Object> bloomFilter = redissonClient.getBloomFilter("sku:bloom:filter");
+            List<ProductSku> productSkuList = productSkuMapper.selectList(new LambdaQueryWrapper<ProductSku>().eq(ProductSku::getProductId, id));
+            productSkuList.forEach(item -> {
+                bloomFilter.add(item.getId());
+            });
+        } else {
+            product.setStatus(-1);
+        }
         baseMapper.updateById(product);
     }
 
     @Transactional(rollbackFor = Exception.class)
     @Override
+    @GuiguCache(prefix = "product_insert:")
     public int insertProduct(Product product) {
         //商品
         baseMapper.insert(product);
@@ -114,6 +128,7 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
 
     @Transactional(rollbackFor = Exception.class)
     @Override
+    @GuiguCache(prefix = "product_by_id:")
     public Product selectProductById(Long id) {
         //商品信息
         Product product = baseMapper.selectById(id);
@@ -142,6 +157,7 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
 
     @Transactional(rollbackFor = Exception.class)
     @Override
+    @GuiguCache(prefix = "product_update:")
     public int updateProduct(Product product) {
         baseMapper.updateById(product);
 
@@ -174,6 +190,7 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
 
     @Transactional(rollbackFor = Exception.class)
     @Override
+    @GuiguCache(prefix = "product_delete:")
     public int deleteProductByIds(Long[] ids) {
         baseMapper.deleteBatchIds(Arrays.asList(ids));
         //获取sku列表
@@ -197,5 +214,83 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
         );
         return 1;
     }
+
+    @Override
+    @GuiguCache(prefix = "product_top_sale:")
+    public List<ProductSku> getTopSale() {
+        return productSkuMapper.selectTopSale();
+    }
+
+    @Override
+    @GuiguCache(prefix = "product_sku_list:")
+    public List<ProductSku> selectProductSkuList(SkuQuery skuQuery) {
+        return productSkuMapper.selectProductSkuList(skuQuery);
+    }
+
+    @Override
+    public SkuPriceVo getSkuPrice(Long skuId) {
+        ProductSku productSku = productSkuMapper.selectOne(
+                new LambdaQueryWrapper<ProductSku>()
+                        .eq(ProductSku::getId, skuId)
+                        .select(ProductSku::getSalePrice, ProductSku::getMarketPrice));
+        SkuPriceVo skuPrice = new SkuPriceVo();
+        BeanUtils.copyProperties(productSku, skuPrice);
+        skuPrice.setSkuId(skuId);
+        return skuPrice;
+    }
+
+    @Override
+    @GuiguCache(prefix = "product_details:")
+    public ProductDetails getProductDetails(Long id) {
+        return productDetailsMapper.selectOne(
+                new LambdaQueryWrapper<ProductDetails>()
+                        .eq(ProductDetails::getProductId, id)
+        );
+    }
+
+    @Override
+    @GuiguCache(prefix = "product_sku_spec:")
+    public Map<String, Long> getSkuSpecValue(Long id) {
+        LambdaQueryWrapper<ProductSku> queryWrapper = new LambdaQueryWrapper<ProductSku>()
+                .eq(ProductSku::getProductId, id)
+                .select(ProductSku::getId, ProductSku::getSkuSpec);
+        List<ProductSku> productSkuList = productSkuMapper.selectList(queryWrapper);
+        return productSkuList.stream().collect(Collectors.toMap(item -> item.getSkuSpec(), item -> item.getId()));
+    }
+
+    @Override
+    @GuiguCache(prefix = "product_sku_stock:")
+    public SkuStockVo getSkuStock(Long skuId) {
+        LambdaQueryWrapper<SkuStock> queryWrapper = new LambdaQueryWrapper<SkuStock>()
+                .eq(SkuStock::getSkuId, skuId)
+                .select(SkuStock::getAvailableNum, SkuStock::getSaleNum);
+        SkuStockVo skuStockVo = new SkuStockVo();
+        SkuStock skuStock = skuStockMapper.selectOne(queryWrapper);
+        BeanUtils.copyProperties(skuStock, skuStockVo);
+        skuStockVo.setSkuId(skuId);
+        return skuStockVo;
+    }
+
+    @Override
+    @GuiguCache(prefix = "product_single:")
+    public Product getProduct(Long id) {
+        //return this.getById(id);
+        return baseMapper.selectById(id);
+    }
+
+    @Override
+    public List<SkuPriceVo> getSkuPriceList(List<Long> skuIdList) {
+
+        LambdaQueryWrapper<ProductSku> queryWrapper = new LambdaQueryWrapper<ProductSku>()
+                .in(ProductSku::getId, skuIdList)
+                .select(ProductSku::getId, ProductSku::getSalePrice);
+        return productSkuMapper.selectList(queryWrapper).stream().map(item -> {
+                SkuPriceVo skuPrice = new SkuPriceVo();
+                BeanUtils.copyProperties(item, skuPrice);
+                skuPrice.setSkuId(item.getId());
+                return skuPrice;
+                }).collect(Collectors.toList());
+    }
+
 
 }

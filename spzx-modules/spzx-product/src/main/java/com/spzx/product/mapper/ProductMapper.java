@@ -1,6 +1,6 @@
 package com.spzx.product.mapper;
 
-import com.spzx.product.domain.Product;
+import com.spzx.product.api.domain.Product;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 import java.util.List;
@@ -16,4 +16,6 @@ import java.util.List;
 public interface ProductMapper extends BaseMapper<Product> {
 
     List<Product> selectProductList(Product product);
+
+
 }

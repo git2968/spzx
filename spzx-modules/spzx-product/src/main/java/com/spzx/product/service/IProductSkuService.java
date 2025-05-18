@@ -1,6 +1,6 @@
 package com.spzx.product.service;
 
-import com.spzx.product.domain.ProductSku;
+import com.spzx.product.api.domain.ProductSku;
 import com.baomidou.mybatisplus.extension.service.IService;
 
 /**
@@ -13,4 +13,5 @@ import com.baomidou.mybatisplus.extension.service.IService;
  */
 public interface IProductSkuService extends IService<ProductSku> {
 
+    ProductSku getProduceSKU(Long skuId);
 }

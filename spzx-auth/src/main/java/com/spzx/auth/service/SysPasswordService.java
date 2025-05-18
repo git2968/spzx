@@ -3,6 +3,8 @@ package com.spzx.auth.service;
 import java.util.concurrent.TimeUnit;
 
 import com.spzx.system.api.model.LoginUser;
+import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import com.spzx.common.core.constant.CacheConstants;

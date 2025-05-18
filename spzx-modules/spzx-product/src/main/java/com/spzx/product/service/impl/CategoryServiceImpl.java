@@ -3,18 +3,20 @@ package com.spzx.product.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.spzx.common.core.exception.ServiceException;
 import com.spzx.common.core.utils.StringUtils;
-import com.spzx.common.core.utils.bean.BeanValidators;
-import com.spzx.common.security.utils.SecurityUtils;
+
+import com.spzx.product.api.domain.vo.CategoryVo;
 import com.spzx.product.domain.Category;
+import com.spzx.product.helper.CategoryHelper;
 import com.spzx.product.mapper.CategoryMapper;
 import com.spzx.product.service.ICategoryService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.spzx.system.api.domain.SysUser;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -114,6 +116,27 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, Category> i
             successMsg.insert(0, "恭喜您，数据已全部导入成功！共 " + successNum + " 条，数据如下：");
         }
         return successMsg.toString();
+    }
+
+    @Override
+    public List<CategoryVo> getOneCategory() {
+        List<Category> allCategoryList = baseMapper.selectList(new LambdaQueryWrapper<Category>().eq(Category::getParentId, 0));
+        return allCategoryList.stream().map(item -> {
+            CategoryVo categoryVo = new CategoryVo();
+            BeanUtils.copyProperties(item, categoryVo);
+            return categoryVo;
+        }).collect(Collectors.toList());
+    }
+
+    @Override
+    public List<CategoryVo> tree() {
+        List<Category> allCategoryList = baseMapper.selectList(null);
+        List<CategoryVo> categoryVoList = allCategoryList.stream().map(item -> {
+            CategoryVo categoryVo = new CategoryVo();
+            BeanUtils.copyProperties(item, categoryVo);
+            return categoryVo;
+        }).collect(Collectors.toList());
+        return CategoryHelper.buildTree(categoryVoList);
     }
 
     private List<Category> getParentCategory(Long id,List<Category> list){

@@ -2,7 +2,7 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.spzx.product.mapper.ProductMapper">
 
-    <select id="selectProductList" resultType="com.spzx.product.domain.Product">
+    <select id="selectProductList" resultType="com.spzx.product.api.domain.Product">
         select
             p.id, p.name, p.brand_id, p.category1_id, p.category2_id, p.category3_id, p.unit_name, p.slider_urls, p.spec_value, p.status, p.audit_status, p.audit_message, p.create_time, p.update_by, p.update_time, p.del_flag, p.del_flag, p.remark,
             b.name brandName ,
@@ -31,4 +31,5 @@
             and p.del_flag = '0' and b.del_flag = '0' and c1.del_flag = '0' and c2.del_flag= '0' and c3.del_flag = '0'
         </where>
     </select>
+
 </mapper>

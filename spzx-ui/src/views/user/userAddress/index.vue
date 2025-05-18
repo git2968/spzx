@@ -9,10 +9,10 @@
           @keyup.enter="handleQuery"
         />
       </el-form-item>
-      <el-form-item label="${comment}" prop="name">
+      <el-form-item label="昵称" prop="name">
         <el-input
           v-model="queryParams.name"
-          placeholder="请输入${comment}"
+          placeholder="请输入昵称"
           clearable
           @keyup.enter="handleQuery"
         />
@@ -33,26 +33,26 @@
           @keyup.enter="handleQuery"
         />
       </el-form-item>
-      <el-form-item label="省code" prop="provinceCode">
+      <el-form-item label="省邮编" prop="provinceCode">
         <el-input
           v-model="queryParams.provinceCode"
-          placeholder="请输入省code"
+          placeholder="请输入省邮编"
           clearable
           @keyup.enter="handleQuery"
         />
       </el-form-item>
-      <el-form-item label="市code" prop="cityCode">
+      <el-form-item label="市邮编" prop="cityCode">
         <el-input
           v-model="queryParams.cityCode"
-          placeholder="请输入市code"
+          placeholder="请输入市邮编"
           clearable
           @keyup.enter="handleQuery"
         />
       </el-form-item>
-      <el-form-item label="区code" prop="districtCode">
+      <el-form-item label="区邮编" prop="districtCode">
         <el-input
           v-model="queryParams.districtCode"
-          placeholder="请输入区code"
+          placeholder="请输入区邮编"
           clearable
           @keyup.enter="handleQuery"
         />
@@ -123,14 +123,14 @@
 
     <el-table v-loading="loading" :data="userAddressList" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center" />
-      <el-table-column label="${comment}" align="center" prop="id" />
+      <el-table-column label="id" align="center" prop="id" />
       <el-table-column label="用户ID" align="center" prop="userId" />
-      <el-table-column label="${comment}" align="center" prop="name" />
+      <el-table-column label="昵称" align="center" prop="name" />
       <el-table-column label="电话" align="center" prop="phone" />
       <el-table-column label="标签名称" align="center" prop="tagName" />
-      <el-table-column label="省code" align="center" prop="provinceCode" />
-      <el-table-column label="市code" align="center" prop="cityCode" />
-      <el-table-column label="区code" align="center" prop="districtCode" />
+      <el-table-column label="省邮编" align="center" prop="provinceCode" />
+      <el-table-column label="市邮编" align="center" prop="cityCode" />
+      <el-table-column label="区邮编" align="center" prop="districtCode" />
       <el-table-column label="详细地址" align="center" prop="address" />
       <el-table-column label="完整地址" align="center" prop="fullAddress" />
       <el-table-column label="是否默认地址" align="center" prop="isDefault" />
@@ -157,8 +157,8 @@
         <el-form-item label="用户ID" prop="userId">
           <el-input v-model="form.userId" placeholder="请输入用户ID" />
         </el-form-item>
-        <el-form-item label="${comment}" prop="name">
-          <el-input v-model="form.name" placeholder="请输入${comment}" />
+        <el-form-item label="昵称" prop="name">
+          <el-input v-model="form.name" placeholder="请输入昵称" />
         </el-form-item>
         <el-form-item label="电话" prop="phone">
           <el-input v-model="form.phone" placeholder="请输入电话" />
@@ -166,14 +166,14 @@
         <el-form-item label="标签名称" prop="tagName">
           <el-input v-model="form.tagName" placeholder="请输入标签名称" />
         </el-form-item>
-        <el-form-item label="省code" prop="provinceCode">
-          <el-input v-model="form.provinceCode" placeholder="请输入省code" />
+        <el-form-item label="省邮编" prop="provinceCode">
+          <el-input v-model="form.provinceCode" placeholder="请输入省邮编" />
         </el-form-item>
-        <el-form-item label="市code" prop="cityCode">
-          <el-input v-model="form.cityCode" placeholder="请输入市code" />
+        <el-form-item label="市邮编" prop="cityCode">
+          <el-input v-model="form.cityCode" placeholder="请输入市邮编" />
         </el-form-item>
-        <el-form-item label="区code" prop="districtCode">
-          <el-input v-model="form.districtCode" placeholder="请输入区code" />
+        <el-form-item label="区邮编" prop="districtCode">
+          <el-input v-model="form.districtCode" placeholder="请输入区邮编" />
         </el-form-item>
         <el-form-item label="详细地址" prop="address">
           <el-input v-model="form.address" placeholder="请输入详细地址" />
@@ -237,7 +237,7 @@ const data = reactive({
       { required: true, message: "用户ID不能为空", trigger: "blur" }
     ],
     name: [
-      { required: true, message: "$comment不能为空", trigger: "blur" }
+      { required: true, message: "昵称不能为空", trigger: "blur" }
     ],
     phone: [
       { required: true, message: "电话不能为空", trigger: "blur" }

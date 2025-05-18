@@ -4,10 +4,12 @@ import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.util.MapUtils;
 import com.alibaba.fastjson.JSON;
 import com.spzx.common.core.constant.HttpStatus;
+import com.spzx.common.core.domain.R;
 import com.spzx.common.core.utils.bean.BeanUtils;
 import com.spzx.common.core.utils.poi.ExcelUtil;
 import com.spzx.common.core.web.domain.AjaxResult;
-import com.spzx.common.security.utils.SecurityUtils;
+import com.spzx.common.security.annotation.InnerAuth;
+import com.spzx.product.api.domain.vo.CategoryVo;
 import com.spzx.product.domain.Category;
 import com.spzx.product.domain.vo.CategoryExcelVo;
 import com.spzx.product.listener.ExcelListener;
@@ -109,5 +111,17 @@ public class CategoryController extends BaseController {
             response.getWriter().println(JSON.toJSONString(map));
         }
     }
+    @InnerAuth
+    @GetMapping(value = "/getOneCategory")
+    public R<List<CategoryVo> > getOneCategory() {
+        return R.ok(categoryService.getOneCategory());
+    }
+
+    @InnerAuth
+    @GetMapping(value = "/tree")
+    public R<List<CategoryVo> > tree() {
+        return R.ok(categoryService.tree());
+    }
+
 
 }
