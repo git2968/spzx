@@ -1,4 +1,4 @@
-package com.spzx.order.domain;
+package com.spzx.order.api.domain;
 
 import java.math.BigDecimal;
 import java.util.Date;

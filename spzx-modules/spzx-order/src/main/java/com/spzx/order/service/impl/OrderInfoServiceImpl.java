@@ -7,7 +7,6 @@ import java.util.stream.Collectors;
 
 import com.alibaba.cloud.commons.lang.StringUtils;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.spzx.cart.api.RemoteCartService;
 import com.spzx.cart.api.domain.CartInfo;
@@ -15,16 +14,21 @@ import com.spzx.common.core.constant.SecurityConstants;
 import com.spzx.common.core.context.SecurityContextHolder;
 import com.spzx.common.core.domain.R;
 import com.spzx.common.core.exception.ServiceException;
-import com.spzx.common.core.utils.DateUtils;
+import com.spzx.common.rabbit.constant.MqConst;
+import com.spzx.common.rabbit.service.RabbitService;
 import com.spzx.common.security.utils.SecurityUtils;
+import com.spzx.order.api.domain.OrderInfo;
+import com.spzx.order.api.domain.OrderItem;
 import com.spzx.order.domain.*;
 import com.spzx.order.mapper.OrderItemMapper;
 import com.spzx.order.mapper.OrderLogMapper;
 import com.spzx.product.api.RemoteProductService;
 import com.spzx.product.api.domain.ProductSku;
+import com.spzx.product.api.domain.vo.SkuLockVo;
 import com.spzx.product.api.domain.vo.SkuPriceVo;
 import com.spzx.user.api.RemoteUserAddressService;
 import com.spzx.user.api.domain.UserAddress;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -64,6 +68,9 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
 
     @Autowired
     private OrderLogMapper orderLogMapper;
+
+    @Autowired
+    private RabbitService rabbitService;
 
     /**
      * 查询订单列表
@@ -181,9 +188,42 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
             throw new ServiceException(priceCheckResult);
         }
 
-        Long orderId = this.saveOrder(orderForm);
+        List<SkuLockVo> skuLockVos = orderItemList.stream().map(orderItem -> {
+            SkuLockVo skuLockVo = new SkuLockVo();
+            skuLockVo.setSkuId(orderItem.getSkuId());
+            skuLockVo.setSkuNum(orderItem.getSkuNum().intValue());
+            skuLockVo.setSkuName(orderItem.getSkuName());
+            return skuLockVo;
+        }).collect(Collectors.toList());
+        R<String> stringResult = remoteProductService.checkAndLock(orderForm.getTradeNo(), skuLockVos, SecurityConstants.INNER);
+        if (R.FAIL == stringResult.getCode()) {
+            throw new ServiceException(stringResult.getMsg());
+        }
+        String stringResultData = stringResult.getData();
+        if (StringUtils.isNotEmpty(stringResultData)){
+            throw new ServiceException(stringResultData);
+        }
+
+
+        Long orderId = null;
+        try {
+            orderId = this.saveOrder(orderForm);
+        } catch (Exception e) {
+            log.error(ExceptionUtils.getStackTrace(e));
+            rabbitService.sendMessage(
+                    MqConst.EXCHANGE_PRODUCT,
+                    MqConst.ROUTING_UNLOCK,
+                    orderForm.getTradeNo());
+            throw new ServiceException("下单失败");
+        }
 
         remoteCartService.deleteCartCheckedList(userId, SecurityConstants.INNER);
+        rabbitService.sendDealyMessage(
+                MqConst.EXCHANGE_CANCEL_ORDER,
+                MqConst.ROUTING_CANCEL_ORDER,
+                String.valueOf(orderId),
+                MqConst.CANCEL_ORDER_DELAY_TIME);
+
         return orderId;
     }
 
@@ -227,6 +267,69 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
             });
         }
         return orderInfoList;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void processCloseOrder(long orderId) {
+        OrderInfo orderInfo = orderInfoMapper.selectById(orderId);
+        if(null != orderInfo && orderInfo.getOrderStatus().intValue() == 0) {
+            orderInfo.setOrderStatus(-1);
+            orderInfo.setCancelTime(new Date());
+            orderInfo.setCancelReason("未支付自动取消");
+            orderInfoMapper.updateById(orderInfo);
+
+            //记录日志
+            OrderLog orderLog = new OrderLog();
+            orderLog.setOrderId(orderInfo.getId());
+            orderLog.setProcessStatus(-1);
+            orderLog.setNote("系统取消订单");
+            orderLogMapper.insert(orderLog);
+
+            rabbitService.sendMessage(
+                    MqConst.EXCHANGE_PRODUCT,
+                    MqConst.ROUTING_UNLOCK,
+                    orderInfo.getOrderNo());
+        }
+    }
+
+    @Override
+    public void cancelOrder(Long orderId) {
+        OrderInfo orderInfo = orderInfoMapper.selectById(orderId);
+        if(null != orderInfo && orderInfo.getOrderStatus().intValue() == 0) {
+            orderInfo.setOrderStatus(-1);
+            orderInfo.setCancelTime(new Date());
+            orderInfo.setCancelReason("用户取消订单");
+            orderInfoMapper.updateById(orderInfo);
+            //记录日志
+            OrderLog orderLog = new OrderLog();
+            orderLog.setOrderId(orderInfo.getId());
+            orderLog.setProcessStatus(-1);
+            orderLog.setNote("用户取消订单");
+            orderLogMapper.insert(orderLog);
+            //发送MQ消息通知商品系统解锁库存
+            rabbitService.sendMessage(
+                    MqConst.EXCHANGE_PRODUCT,
+                    MqConst.QUEUE_UNLOCK,
+                    orderInfo.getOrderNo());
+        }
+    }
+
+    @Override
+    public OrderInfo getByOrderNo(String orderNo) {
+        OrderInfo orderInfo = orderInfoMapper.selectOne(
+                new LambdaQueryWrapper<OrderInfo>()
+                        .eq(OrderInfo::getOrderNo, orderNo)
+        );
+        if (null != orderInfo){
+            List<OrderItem> orderItemList = orderItemMapper.selectList(
+                    new LambdaQueryWrapper<OrderItem>()
+                            .eq(OrderItem::getOrderId, orderInfo.getId())
+            );
+            orderInfo.setOrderItemList(orderItemList);
+
+        }
+        return orderInfo;
     }
 
     private Long saveOrder(OrderForm orderForm) {

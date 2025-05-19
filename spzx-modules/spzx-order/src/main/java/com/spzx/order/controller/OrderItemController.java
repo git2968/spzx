@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.spzx.common.log.annotation.Log;
 import com.spzx.common.log.enums.BusinessType;
 import com.spzx.common.security.annotation.RequiresPermissions;
-import com.spzx.order.domain.OrderItem;
+import com.spzx.order.api.domain.OrderItem;
 import com.spzx.order.service.IOrderItemService;
 import com.spzx.common.core.web.controller.BaseController;
 import com.spzx.common.core.web.domain.AjaxResult;

@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.spzx.common.core.exception.ServiceException;
 import com.spzx.common.redis.cache.GuiguCache;
 import com.spzx.product.api.domain.SkuQuery;
+import com.spzx.product.api.domain.vo.SkuLockVo;
 import com.spzx.product.api.domain.vo.SkuPriceVo;
 import com.spzx.product.api.domain.vo.SkuStockVo;
 import com.spzx.product.api.domain.Product;
@@ -19,15 +20,18 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.redisson.api.RBloomFilter;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.redisson.api.RBloomFilter;
 import org.redisson.api.RedissonClient;
+import org.springframework.util.CollectionUtils;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
@@ -48,6 +52,8 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
     private SkuStockMapper skuStockMapper;
     @Autowired
     private RedissonClient redissonClient;
+    @Autowired
+    private RedisTemplate redisTemplate;
 
     @Override
     @GuiguCache(prefix = "product_list:")
@@ -290,6 +296,91 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
                 skuPrice.setSkuId(item.getId());
                 return skuPrice;
                 }).collect(Collectors.toList());
+    }
+
+    @Override
+    public String checkAndLock(String orderNo, List<SkuLockVo> skuLockVoList) {
+        String key = "sku:checkAndLock:" + orderNo;
+        String dataKey = "sku:lock:data:" + orderNo;
+        Boolean isFrist = redisTemplate.opsForValue().setIfAbsent(key, orderNo, 1, TimeUnit.HOURS);
+        if (!isFrist){
+            return "重复提交";
+        }
+        for (SkuLockVo skuLockVo : skuLockVoList) {
+            SkuStock skuStock = skuStockMapper.check(skuLockVo.getSkuId(), skuLockVo.getSkuNum());
+            if (skuStock == null){
+                skuLockVo.setHaveStock(false);
+            }else {
+                skuLockVo.setHaveStock(true);
+            }
+        }
+        if (skuLockVoList.stream().anyMatch(item -> !item.isHaveStock())){
+            List<SkuLockVo> noSkuLockVos = skuLockVoList.stream()
+                    .filter(item -> !item.isHaveStock())
+                    .collect(Collectors.toList());
+            StringBuffer stringBuffer = new StringBuffer();
+            for (SkuLockVo noSkuLockVo : noSkuLockVos) {
+                stringBuffer.append("商品"+noSkuLockVo.getSkuId()+"库存不足");
+            }
+            redisTemplate.delete(key);
+            return stringBuffer.toString();
+        }else {
+            for (SkuLockVo skuLockVo : skuLockVoList) {
+                skuStockMapper.lock(skuLockVo.getSkuId(), skuLockVo.getSkuNum());
+                redisTemplate.delete(dataKey);
+            }
+        }
+        redisTemplate.opsForValue().set(dataKey, skuLockVoList);
+        return "";
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void unlock(String orderNo) {
+        String key = "sku:unlock:" + orderNo;
+        String dataKey = "sku:lock:data:" + orderNo;
+        Boolean isFirst = redisTemplate.opsForValue().setIfAbsent(key, orderNo, 1, TimeUnit.HOURS);
+        if (!isFirst){
+            return;
+        }
+        List<SkuLockVo> skuLockVoList = (List<SkuLockVo>)redisTemplate.opsForValue().get(dataKey);
+        if (CollectionUtils.isEmpty(skuLockVoList)){
+            return ;
+        }
+        for (SkuLockVo skuLockVo : skuLockVoList) {
+            skuStockMapper.unlock(skuLockVo.getSkuId(), skuLockVo.getSkuNum());
+            redisTemplate.delete(dataKey);
+        }
+        redisTemplate.delete(dataKey);
+    }
+
+    @Override
+    @Transactional(rollbackFor = {Exception.class})
+    public void minus(String orderNo) {
+        String key = "sku:minus:" + orderNo;
+        String dataKey = "sku:lock:data:" + orderNo;
+        //业务去重，防止重复消费
+        Boolean isExist = redisTemplate.opsForValue().setIfAbsent(key, orderNo, 1, TimeUnit.HOURS);
+        if(!isExist) return;
+
+        // 获取锁定库存的缓存信息
+        List<SkuLockVo> skuLockVoList = (List<SkuLockVo>)this.redisTemplate.opsForValue().get(dataKey);
+        if (CollectionUtils.isEmpty(skuLockVoList)){
+            return ;
+        }
+
+        // 减库存
+        skuLockVoList.forEach(skuLockVo -> {
+            int row = skuStockMapper.minus(skuLockVo.getSkuId(), skuLockVo.getSkuNum());
+            if(row == 0) {
+                //解除去重
+                this.redisTemplate.delete(key);
+                throw new ServiceException("减出库失败");
+            }
+        });
+
+        // 解锁库存之后，删除锁定库存的缓存。以防止重复解锁库存
+        this.redisTemplate.delete(dataKey);
     }
 
 

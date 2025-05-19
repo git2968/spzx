@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.Arrays;
 
 import com.github.pagehelper.PageHelper;
+import com.spzx.common.core.domain.R;
+import com.spzx.common.security.annotation.InnerAuth;
 import com.spzx.common.security.annotation.RequiresLogin;
 import com.spzx.order.domain.OrderForm;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -13,7 +15,7 @@ import org.springframework.web.bind.annotation.*;
 import com.spzx.common.log.annotation.Log;
 import com.spzx.common.log.enums.BusinessType;
 import com.spzx.common.security.annotation.RequiresPermissions;
-import com.spzx.order.domain.OrderInfo;
+import com.spzx.order.api.domain.OrderInfo;
 import com.spzx.order.service.IOrderInfoService;
 import com.spzx.common.core.web.controller.BaseController;
 import com.spzx.common.core.web.domain.AjaxResult;
@@ -155,4 +157,22 @@ public class OrderInfoController extends BaseController
         List<OrderInfo> list = orderInfoService.selectUserOrderInfoList(orderStatus);
         return getDataTable(list);
     }
+
+    @Operation(summary = "取消订单")
+    @RequiresLogin
+    @GetMapping("cancelOrder/{orderId}")
+    public AjaxResult cancelOrder(@PathVariable Long orderId) {
+        orderInfoService.cancelOrder(orderId);
+        return success();
+    }
+
+    @Operation(summary = "根据订单号获取订单信息")
+    @InnerAuth
+    @GetMapping("getByOrderNo/{orderNo}")
+    public R<OrderInfo> getByOrderNo(@PathVariable String orderNo) {
+        OrderInfo orderInfo = orderInfoService.getByOrderNo(orderNo);
+        return R.ok(orderInfo);
+    }
+
+
 }

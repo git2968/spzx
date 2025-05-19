@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.spzx.payment.mapper.PaymentInfoMapper">
+
+    <resultMap type="PaymentInfo" id="PaymentInfoResult" autoMapping="true">
+    </resultMap>
+
+    <sql id="selectPaymentInfoVo">
+        select id, user_id, order_no, pay_type, trade_no, amount, content, payment_status, callback_time, callback_content, create_time, create_by, update_time, update_by, del_flag, remark from payment_info
+    </sql>
+
+    <select id="selectPaymentInfoList" parameterType="PaymentInfo" resultMap="PaymentInfoResult">
+        <include refid="selectPaymentInfoVo"/>
+        <where>
+            <if test="userId != null "> and user_id = #{userId}</if>
+            <if test="orderNo != null  and orderNo != ''"> and order_no = #{orderNo}</if>
+            <if test="payType != null "> and pay_type = #{payType}</if>
+            <if test="tradeNo != null  and tradeNo != ''"> and trade_no = #{tradeNo}</if>
+            <if test="amount != null "> and amount = #{amount}</if>
+            <if test="content != null  and content != ''"> and content = #{content}</if>
+            <if test="paymentStatus != null  and paymentStatus != ''"> and payment_status = #{paymentStatus}</if>
+            <if test="callbackTime != null "> and callback_time = #{callbackTime}</if>
+            <if test="callbackContent != null  and callbackContent != ''"> and callback_content = #{callbackContent}</if>
+        and del_flag = 0
+        </where>
+    </select>
+
+</mapper>

@@ -8,6 +8,7 @@ import com.spzx.product.api.domain.ProductDetails;
 import com.spzx.product.api.domain.ProductSku;
 import com.spzx.product.api.domain.Product;
 import com.spzx.product.api.domain.SkuQuery;
+import com.spzx.product.api.domain.vo.SkuLockVo;
 import com.spzx.product.api.domain.vo.SkuPriceVo;
 import com.spzx.product.api.domain.vo.SkuStockVo;
 import com.spzx.product.api.factory.RemoteProductFallbackFactory;
@@ -53,4 +54,7 @@ public interface RemoteProductService {
 
     @PostMapping(value = "/product/getSkuPriceList")
     public R<List<SkuPriceVo>> getSkuPriceList(@RequestBody List<Long> skuIdList, @RequestHeader(SecurityConstants.FROM_SOURCE) String source);
+
+    @PostMapping("/product/checkAndLock/{orderNo}")
+    public R<String> checkAndLock(@PathVariable("orderNo") String orderNo, @RequestBody List<SkuLockVo> skuLockVoList, @RequestHeader(SecurityConstants.FROM_SOURCE) String source);
 }

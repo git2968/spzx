@@ -2,4 +2,24 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.spzx.product.mapper.SkuStockMapper">
 
+
+    <select id="check" resultType="com.spzx.product.domain.SkuStock">
+        select * from sku_stock where sku_id = #{skuId} and available_num > #{num} for update
+    </select>
+
+    <update id="lock">
+        update sku_stock
+        set lock_num = lock_num + #{num}, available_num = available_num - #{num}
+        where sku_id = #{skuId}
+    </update>
+    <update id="unlock">
+        update sku_stock
+        set lock_num = lock_num - #{num}, available_num = available_num + #{num}
+        where sku_id = #{skuId}
+    </update>
+    <update id="minus">
+        update sku_stock
+        set lock_num = lock_num - #{num}, total_num = total_num - #{num}, sale_num = sale_num + #{num}
+        where sku_id = #{skuId}
+    </update>
 </mapper>

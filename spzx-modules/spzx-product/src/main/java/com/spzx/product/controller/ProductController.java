@@ -2,10 +2,12 @@ package com.spzx.product.controller;
 
 import com.github.pagehelper.PageHelper;
 import com.spzx.common.core.domain.R;
+import com.spzx.common.core.exception.ServiceException;
 import com.spzx.common.core.web.domain.AjaxResult;
 import com.spzx.common.core.web.page.TableDataInfo;
 import com.spzx.common.security.annotation.InnerAuth;
 import com.spzx.product.api.domain.SkuQuery;
+import com.spzx.product.api.domain.vo.SkuLockVo;
 import com.spzx.product.api.domain.vo.SkuPriceVo;
 import com.spzx.product.api.domain.vo.SkuStockVo;
 import com.spzx.product.api.domain.Product;
@@ -170,6 +172,13 @@ public class ProductController extends BaseController {
     public R<List<SkuPriceVo>> getSkuPriceList(@RequestBody List<Long> skuIdList)
     {
         return R.ok(productService.getSkuPriceList(skuIdList));
+    }
+
+    @InnerAuth
+    @Operation(summary = "检查与锁定库存")
+    @PostMapping("checkAndLock/{orderNo}")
+    public R<String> checkAndLock(@PathVariable String orderNo, @RequestBody List<SkuLockVo> skuLockVoList) {
+        return R.ok(productService.checkAndLock(orderNo, skuLockVoList));
     }
 
 

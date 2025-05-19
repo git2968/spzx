@@ -1,6 +1,7 @@
 package com.spzx.product.service;
 
 import com.spzx.product.api.domain.SkuQuery;
+import com.spzx.product.api.domain.vo.SkuLockVo;
 import com.spzx.product.api.domain.vo.SkuPriceVo;
 import com.spzx.product.api.domain.vo.SkuStockVo;
 import com.spzx.product.api.domain.Product;
@@ -50,4 +51,10 @@ public interface IProductService extends IService<Product> {
     Product getProduct(Long id);
 
     List<SkuPriceVo> getSkuPriceList(List<Long> skuIdList);
+
+    String checkAndLock(String orderNo, List<SkuLockVo> skuLockVoList);
+
+    void unlock(String orderNo);
+
+    void minus(String orderNo);
 }

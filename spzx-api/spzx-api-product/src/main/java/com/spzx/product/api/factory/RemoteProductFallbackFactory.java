@@ -8,6 +8,7 @@ import com.spzx.product.api.domain.ProductDetails;
 import com.spzx.product.api.domain.ProductSku;
 import com.spzx.product.api.domain.Product;
 import com.spzx.product.api.domain.SkuQuery;
+import com.spzx.product.api.domain.vo.SkuLockVo;
 import com.spzx.product.api.domain.vo.SkuPriceVo;
 import com.spzx.product.api.domain.vo.SkuStockVo;
 import org.slf4j.Logger;
@@ -74,6 +75,11 @@ public class RemoteProductFallbackFactory implements FallbackFactory<RemoteProdu
             @Override
             public R<List<SkuPriceVo>> getSkuPriceList(List<Long> skuIdList, String source) {
                 return R.fail("获取商品sku价格列表失败:" + throwable.getMessage());
+            }
+
+            @Override
+            public R<String> checkAndLock(String orderNo, List<SkuLockVo> skuLockVoList, String source) {
+                return R.fail("检查与锁定商品失败:" + throwable.getMessage());
             }
         };
     }

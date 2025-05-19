@@ -1,6 +1,9 @@
 package com.spzx.order.receiver;
 
+import com.rabbitmq.client.Channel;
+import com.spzx.order.config.DeadLetterMqConfig;
 import com.spzx.common.rabbit.constant.MqConst;
+import com.spzx.order.config.DelayedMqConfig;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.core.Message;
@@ -27,5 +30,42 @@ public class TestReceiver {
         //都可以
         log.info("接收消息：{}", content);
         log.info("接收消息：{}", new String(message.getBody()));
+    }
+
+    /**
+     * 监听确认消息
+     * @param message
+     */
+    @SneakyThrows
+    @RabbitListener(bindings = @QueueBinding(
+            exchange = @Exchange(value = MqConst.EXCHANGE_TEST, durable = "true"),
+            value = @Queue(value = MqConst.QUEUE_CONFIRM, durable = "true"),
+            key = MqConst.ROUTING_CONFIRM
+    ))
+    public void confirm(String content, Message message, Channel channel) {
+        log.info("接收确认消息：{}", content);
+
+        // false 确认一个消息，true 批量确认，false 仅确认当前消息
+        channel.basicAck(message.getMessageProperties().getDeliveryTag(), false);
+    }
+
+    /**
+     * 监听延迟消息
+     * @param msg
+     * @param message
+     * @param channel
+     */
+    @SneakyThrows
+    @RabbitListener(queues = {DeadLetterMqConfig.queue_dead_2})
+    public void getDeadLetterMsg(String msg, Message message, Channel channel) {
+        log.info("死信消费者：{}", msg);
+        channel.basicAck(message.getMessageProperties().getDeliveryTag(), false);
+    }
+
+    @SneakyThrows
+    @RabbitListener(queues = {DelayedMqConfig.queue_delay_1})
+    public void getDelayMsg(String msg, Message message, Channel channel) {
+        log.info("延迟消费者：{}", msg);
+        channel.basicAck(message.getMessageProperties().getDeliveryTag(), false);
     }
 }

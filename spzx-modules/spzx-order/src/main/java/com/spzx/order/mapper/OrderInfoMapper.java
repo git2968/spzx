@@ -1,7 +1,7 @@
 package com.spzx.order.mapper;
 
 import java.util.List;
-import com.spzx.order.domain.OrderInfo;
+import com.spzx.order.api.domain.OrderInfo;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import feign.Param;
 
