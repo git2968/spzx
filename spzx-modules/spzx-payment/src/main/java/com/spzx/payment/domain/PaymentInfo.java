@@ -33,7 +33,7 @@ public class PaymentInfo extends BaseEntity
     /** 付款方式：1-微信 2-支付宝 */
     @Excel(name = "付款方式：1-微信 2-支付宝")
     @Schema(description = "付款方式：1-微信 2-支付宝")
-    private Long payType;
+    private Integer payType;
 
     /** 交易编号（微信或支付） */
     @Excel(name = "交易编号", readConverterExp = "微=信或支付")

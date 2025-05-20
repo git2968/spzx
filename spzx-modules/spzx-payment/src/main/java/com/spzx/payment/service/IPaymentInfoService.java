@@ -1,6 +1,8 @@
 package com.spzx.payment.service;
 
 import java.util.List;
+import java.util.Map;
+
 import com.spzx.payment.domain.PaymentInfo;
 import com.baomidou.mybatisplus.extension.service.IService;
 
@@ -22,4 +24,6 @@ public interface IPaymentInfoService extends IService<PaymentInfo>
     public List<PaymentInfo> selectPaymentInfoList(PaymentInfo paymentInfo);
 
     PaymentInfo savePaymentInfo(String orderNo);
+
+    void updatePaymentStatus(Map<String, String> paramMap, Integer payType);
 }

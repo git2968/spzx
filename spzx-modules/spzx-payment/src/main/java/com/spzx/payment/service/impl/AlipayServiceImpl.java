@@ -3,6 +3,7 @@ package com.spzx.payment.service.impl;
 import com.alibaba.fastjson2.JSON;
 import com.alipay.api.AlipayClient;
 import com.alipay.api.request.AlipayTradeWapPayRequest;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.spzx.common.core.constant.SecurityConstants;
 import com.spzx.common.core.domain.R;
 import com.spzx.common.core.exception.ServiceException;
@@ -61,6 +62,26 @@ public class AlipayServiceImpl implements IAlipayService {
         alipayRequest.setBizContent(JSON.toJSONString(map));
 
         return alipayClient.pageExecute(alipayRequest).getBody(); //调用SDK生成表单;
+    }
+
+    @Override
+    public void closePayment(String orderNo) {
+        //1.查询交易记录
+        PaymentInfo paymentInfo = paymentInfoService.getOne(new LambdaQueryWrapper<PaymentInfo>().eq(PaymentInfo::getOrderNo, orderNo));
+        if(paymentInfo == null) return;
+
+        //2.判断交易记录是否支付，如果未支付，更新交易状态
+        if (paymentInfo.getPaymentStatus().intValue() == 0) {
+            paymentInfo.setPaymentStatus(-1);
+            paymentInfoService.updateById(paymentInfo);
+        }
+
+        //3.判断交易记录是否支付，如果已支付走退款流程
+        if (paymentInfo.getPaymentStatus().intValue() == 1) {
+            log.info("订单已支付，退款");
+            //TODO 退款业务
+            return;
+        }
     }
 
 }

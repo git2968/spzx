@@ -332,6 +332,19 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
         return orderInfo;
     }
 
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void processPaySucess(String orderNo) {
+        //获取订单信息
+        OrderInfo orderInfo = orderInfoMapper.selectOne(new LambdaQueryWrapper<OrderInfo>().eq(OrderInfo::getOrderNo, orderNo).select(OrderInfo::getId, OrderInfo::getOrderStatus));
+        //未支付
+        if(orderInfo.getOrderStatus().intValue() == 0) {
+            orderInfo.setOrderStatus(1);
+            orderInfo.setPaymentTime(new Date());
+            orderInfoMapper.updateById(orderInfo);
+        }
+    }
+
     private Long saveOrder(OrderForm orderForm) {
         Long userId = SecurityContextHolder.getUserId();
         String userName = SecurityContextHolder.getUserName();

@@ -62,6 +62,12 @@
             <groupId>com.alipay.sdk</groupId>
             <artifactId>alipay-sdk-java</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.spzx</groupId>
+            <artifactId>spzx-common-rabbit</artifactId>
+            <version>3.6.3</version>
+            <scope>compile</scope>
+        </dependency>
 
     </dependencies>
 

@@ -97,7 +97,7 @@ public class RabbitInitConfigApplicationListener implements ApplicationListener<
         redisTemplate.opsForValue().set(gmallCorrelationData.getId(), JSON.toJSONString(gmallCorrelationData), 10, TimeUnit.MINUTES);
         log.info("进行消息重发！");
         //重发消息
-        // 方式二：如果是延迟消息，依然需要设置消息延迟时间
+        //todo 方式二：如果是延迟消息，依然需要设置消息延迟时间
         if (gmallCorrelationData.isDelay()) {
             //延迟消息
             rabbitTemplate.convertAndSend(gmallCorrelationData.getExchange(), gmallCorrelationData.getRoutingKey(), gmallCorrelationData.getMessage(), message -> {
